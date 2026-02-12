@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\Schema\Objects;
 
-use Specdocular\OpenAPI\Schema\Objects\Info\Info;
-use Specdocular\OpenAPI\Schema\Objects\License\License;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Specdocular\OpenAPI\Schema\Objects\Info\Info;
+use Specdocular\OpenAPI\Schema\Objects\License\License;
 
 #[CoversClass(License::class)]
 class LicenseTest extends TestCase

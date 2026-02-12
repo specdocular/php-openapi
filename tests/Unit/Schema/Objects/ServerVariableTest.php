@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\Schema\Objects;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
 use Specdocular\OpenAPI\Schema\Objects\Server\Fields\Variables\VariableEntry;
 use Specdocular\OpenAPI\Schema\Objects\Server\Server;
 use Specdocular\OpenAPI\Schema\Objects\ServerVariable\ServerVariable;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ServerVariable::class)]
 class ServerVariableTest extends TestCase

@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\Schema\Objects;
 
-use Specdocular\OpenAPI\Schema\Objects\Contact\Contact;
-use Specdocular\OpenAPI\Schema\Objects\Info\Info;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Specdocular\OpenAPI\Schema\Objects\Contact\Contact;
+use Specdocular\OpenAPI\Schema\Objects\Info\Info;
 
 #[CoversClass(Contact::class)]
 class ContactTest extends TestCase
