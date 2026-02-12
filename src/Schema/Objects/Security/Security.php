@@ -1,0 +1,69 @@
+<?php
+
+namespace Specdocular\OpenAPI\Schema\Objects\Security;
+
+use Specdocular\OpenAPI\Contracts\Abstract\Factories\Composable\SecurityRequirementFactory;
+use Specdocular\OpenAPI\Contracts\Abstract\Generatable;
+use Specdocular\OpenAPI\Contracts\Abstract\ReadonlyGeneratable;
+use Specdocular\OpenAPI\Schema\Objects\Security\SecurityRequirement\SecurityRequirement;
+use Specdocular\OpenAPI\Support\Arr;
+
+/**
+ * Security Requirement Object collection.
+ *
+ * Lists the required security schemes to execute an operation. Each name
+ * MUST correspond to a security scheme declared in the Security Schemes
+ * under the Components Object.
+ *
+ * @see https://spec.openapis.org/oas/v3.2.0#security-requirement-object
+ */
+final class Security extends Generatable
+{
+    private readonly array $securityRequirements;
+
+    private function __construct(
+        SecurityRequirement ...$securityRequirement,
+    ) {
+        $this->securityRequirements = $securityRequirement;
+    }
+
+    public function merge(self $security): self
+    {
+        return self::create(
+            ...$this->securityRequirements,
+            ...$security->securityRequirements,
+        );
+    }
+
+    public static function create(SecurityRequirement|SecurityRequirementFactory ...$securityRequirement): self
+    {
+        $securityRequirements = array_map(
+            static function (
+                SecurityRequirement|SecurityRequirementFactory $securityRequirement,
+            ): SecurityRequirement {
+                if ($securityRequirement instanceof SecurityRequirement) {
+                    return $securityRequirement;
+                }
+
+                return $securityRequirement->object();
+            },
+            $securityRequirement,
+        );
+
+        return new self(...$securityRequirements);
+    }
+
+    public function toArray(): array
+    {
+        return Arr::filter(
+            array_map(
+                function (SecurityRequirement $securityRequirement): Generatable|ReadonlyGeneratable|\stdClass {
+                    return $this->toObjectIfEmpty(
+                        $securityRequirement,
+                    );
+                },
+                $this->securityRequirements,
+            ),
+        );
+    }
+}

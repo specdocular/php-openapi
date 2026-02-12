@@ -1,0 +1,28 @@
+<?php
+
+namespace Specdocular\OpenAPI\Support\Style\Styles;
+
+use Specdocular\OpenAPI\Support\Style\Explodable;
+
+/**
+ * Space-delimited style serialization.
+ *
+ * Applicable locations: query only
+ * Default explode: false
+ *
+ * Serialization behavior:
+ * - Only supports arrays (not primitives or objects)
+ * - array with explode=false: value1%20value2%20value3 (space-separated, URL-encoded)
+ * - With explode=true: behaves like form style
+ *
+ * Equivalent to collectionFormat: ssv in OpenAPI 2.0.
+ *
+ * @see https://spec.openapis.org/oas/v3.2.0#style-values
+ */
+final class SpaceDelimited extends Explodable
+{
+    protected function value(): string
+    {
+        return 'spaceDelimited';
+    }
+}

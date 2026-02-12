@@ -1,0 +1,120 @@
+<?php
+
+namespace Specdocular\OpenAPI\Schema\Objects\Security\SecurityScheme\OAuth;
+
+use Specdocular\OpenAPI\Contracts\Abstract\Generatable;
+use Specdocular\OpenAPI\Schema\Objects\Security\SecurityScheme\OAuth\Flows\AuthorizationCode;
+use Specdocular\OpenAPI\Schema\Objects\Security\SecurityScheme\OAuth\Flows\ClientCredentials;
+use Specdocular\OpenAPI\Schema\Objects\Security\SecurityScheme\OAuth\Flows\DeviceAuthorization;
+use Specdocular\OpenAPI\Schema\Objects\Security\SecurityScheme\OAuth\Flows\Implicit;
+use Specdocular\OpenAPI\Schema\Objects\Security\SecurityScheme\OAuth\Flows\Password;
+use Specdocular\OpenAPI\Support\Arr;
+
+/**
+ * OAuth Flows Object.
+ *
+ * Allows configuration of the supported OAuth Flows. Supports implicit,
+ * password, clientCredentials, authorizationCode, and deviceAuthorization flows.
+ *
+ * @see https://spec.openapis.org/oas/v3.2.0#oauth-flows-object
+ */
+final class OAuthFlows extends Generatable
+{
+    private function __construct(
+        private Implicit|null $implicit = null,
+        private Password|null $password = null,
+        private ClientCredentials|null $clientCredentials = null,
+        private AuthorizationCode|null $authorizationCode = null,
+        private DeviceAuthorization|null $deviceAuthorization = null,
+    ) {
+    }
+
+    /**
+     * Get all scopes of all flows combined in a collection.
+     */
+    public function scopeCollection(): ScopeCollection
+    {
+        /** @var Flow[] $flows */
+        $flows = array_filter([
+            $this->implicit,
+            $this->password,
+            $this->clientCredentials,
+            $this->authorizationCode,
+            $this->deviceAuthorization,
+        ]);
+
+        $scopeCollection = ScopeCollection::create();
+
+        foreach ($flows as $flow) {
+            $scopeCollection = $scopeCollection->merge($flow->scopeCollection());
+        }
+
+        return $scopeCollection;
+    }
+
+    public static function create(
+        Implicit|null $implicit = null,
+        Password|null $password = null,
+        ClientCredentials|null $clientCredentials = null,
+        AuthorizationCode|null $authorizationCode = null,
+        DeviceAuthorization|null $deviceAuthorization = null,
+    ): self {
+        return new self($implicit, $password, $clientCredentials, $authorizationCode, $deviceAuthorization);
+    }
+
+    public function implicit(Implicit $implicit): self
+    {
+        $clone = clone $this;
+
+        $clone->implicit = $implicit;
+
+        return $clone;
+    }
+
+    public function password(Password $password): self
+    {
+        $clone = clone $this;
+
+        $clone->password = $password;
+
+        return $clone;
+    }
+
+    public function clientCredentials(ClientCredentials $clientCredentials): self
+    {
+        $clone = clone $this;
+
+        $clone->clientCredentials = $clientCredentials;
+
+        return $clone;
+    }
+
+    public function authorizationCode(AuthorizationCode $authorizationCode): self
+    {
+        $clone = clone $this;
+
+        $clone->authorizationCode = $authorizationCode;
+
+        return $clone;
+    }
+
+    public function deviceAuthorization(DeviceAuthorization $deviceAuthorization): self
+    {
+        $clone = clone $this;
+
+        $clone->deviceAuthorization = $deviceAuthorization;
+
+        return $clone;
+    }
+
+    public function toArray(): array
+    {
+        return Arr::filter([
+            'implicit' => $this->implicit,
+            'password' => $this->password,
+            'clientCredentials' => $this->clientCredentials,
+            'authorizationCode' => $this->authorizationCode,
+            'deviceAuthorization' => $this->deviceAuthorization,
+        ]);
+    }
+}

@@ -1,0 +1,28 @@
+<?php
+
+namespace Specdocular\OpenAPI\Support\Style\Styles;
+
+use Specdocular\OpenAPI\Support\Style\Explodable;
+
+/**
+ * Matrix style serialization (RFC6570 path-style expansion).
+ *
+ * Applicable locations: path only
+ * Default explode: false
+ *
+ * Serialization behavior:
+ * - primitive: ;name=value (e.g., ";color=blue")
+ * - array with explode=false: ;name=value1,value2 (e.g., ";color=blue,black,brown")
+ * - array with explode=true: ;name=value1;name=value2 (e.g., ";color=blue;color=black")
+ * - object with explode=false: ;name=key1,value1,key2,value2
+ * - object with explode=true: ;key1=value1;key2=value2
+ *
+ * @see https://spec.openapis.org/oas/v3.2.0#style-values
+ */
+final class Matrix extends Explodable
+{
+    protected function value(): string
+    {
+        return 'matrix';
+    }
+}

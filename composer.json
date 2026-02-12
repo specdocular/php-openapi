@@ -1,0 +1,77 @@
+{
+    "name": "specdocular/php-openapi",
+    "type": "library",
+    "description": "Object-oriented OpenAPI implementation for PHP",
+    "keywords": ["openapi", "swagger", "api", "specification", "php"],
+    "license": "MIT",
+    "homepage": "https://github.com/specdocular/php-openapi",
+    "support": {
+        "issues": "https://github.com/specdocular/php-openapi/issues",
+        "source": "https://github.com/specdocular/php-openapi"
+    },
+    "authors": [
+        {
+            "name": "Mohammad Alavi",
+            "email": "mohammad.alavi1990@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "specdocular/php-json-schema": "dev-main",
+        "myclabs/deep-copy": "^1.12",
+        "webmozart/assert": "^1.11"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.8.0",
+        "justinrainbow/json-schema": "^6.0",
+        "pestphp/pest": "^3.2",
+        "pestphp/pest-plugin-type-coverage": "^3.0",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpstan/phpstan-webmozart-assert": "^2.0",
+        "rector/rector": "^2.0",
+        "slevomat/coding-standard": "^8.15",
+        "squizlabs/php_codesniffer": "*",
+        "vimeo/psalm": "^6.0.0"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/specdocular/php-json-schema"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Specdocular\\OpenAPI\\": "src/"
+        },
+        "files": [
+            "src/Support/Helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "fixer": ["php ./vendor/bin/php-cs-fixer fix"],
+        "cs": ["php ./vendor/bin/phpcbf --standard=phpcs.xml"],
+        "rector": ["php ./vendor/bin/rector"],
+        "lint": ["@php vendor/bin/phpstan analyse --verbose --ansi"],
+        "test": ["@php vendor/bin/pest"],
+        "dev": ["@fixer", "@cs", "@rector", "@lint", "@test"]
+    }
+}

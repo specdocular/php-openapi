@@ -1,0 +1,653 @@
+<?php
+
+use Specdocular\JsonSchema\Draft202012\Formats\StringFormat;
+use Specdocular\JsonSchema\Draft202012\Keywords\Properties\Property;
+use Specdocular\OpenAPI\Schema\Objects\Components\Components;
+use Specdocular\OpenAPI\Schema\Objects\Contact\Contact;
+use Specdocular\OpenAPI\Schema\Objects\ExternalDocumentation\ExternalDocumentation;
+use Specdocular\OpenAPI\Schema\Objects\Info\Info;
+use Specdocular\OpenAPI\Schema\Objects\MediaType\MediaType;
+use Specdocular\OpenAPI\Schema\Objects\OpenAPI\Fields\JsonSchemaDialect;
+use Specdocular\OpenAPI\Schema\Objects\OpenAPI\OpenAPI;
+use Specdocular\OpenAPI\Schema\Objects\Operation\Operation;
+use Specdocular\OpenAPI\Schema\Objects\Parameter\Parameter;
+use Specdocular\OpenAPI\Schema\Objects\PathItem\PathItem;
+use Specdocular\OpenAPI\Schema\Objects\PathItem\Support\AvailableOperation;
+use Specdocular\OpenAPI\Schema\Objects\PathItem\Support\HttpMethod;
+use Specdocular\OpenAPI\Schema\Objects\Paths\Fields\Path;
+use Specdocular\OpenAPI\Schema\Objects\Paths\Paths;
+use Specdocular\OpenAPI\Schema\Objects\RequestBody\RequestBody;
+use Specdocular\OpenAPI\Schema\Objects\Response\Response;
+use Specdocular\OpenAPI\Schema\Objects\Responses\Fields\HTTPStatusCode;
+use Specdocular\OpenAPI\Schema\Objects\Responses\Responses;
+use Specdocular\OpenAPI\Schema\Objects\Responses\Support\ResponseEntry;
+use Specdocular\OpenAPI\Schema\Objects\Schema\Schema;
+use Specdocular\OpenAPI\Schema\Objects\Server\Server;
+use Specdocular\OpenAPI\Schema\Objects\Tag\Tag;
+use Specdocular\OpenAPI\Schema\Objects\Webhooks\Fields\Webhook;
+use Specdocular\OpenAPI\Schema\Objects\Webhooks\Webhooks;
+use Specdocular\OpenAPI\Support\Serialization\PathParameter;
+use Specdocular\OpenAPI\Support\Serialization\QueryParameter;
+use Specdocular\OpenAPI\Support\SharedFields\Content\ContentEntry;
+use Specdocular\OpenAPI\Support\SharedFields\Parameters;
+use Tests\Support\Factories\Security\SecuritySchemes\TestBearerSecuritySchemeFactory;
+use Tests\Support\Factories\Security\SecuritySchemes\TestOAuth2PasswordSecuritySchemeFactory;
+use Tests\Support\Factories\Security\TestComplexMultiSecurityFactory;
+
+describe(class_basename(OpenAPI::class), function (): void {
+    it('can be created and validated', function (): void {
+        $tag = Tag::create('Audits')->description('All the audits');
+
+        $contact = Contact::create()
+            ->name('Example')
+            ->url('https://laragen.io')
+            ->email('hello@laragen.io');
+
+        $info = Info::create(
+            'API Specification',
+            'v1',
+        )->description('For using the Example App API')
+            ->contact($contact);
+
+        // TODO: Allow creating a Schema without a key.
+        // Some schemas can be created without a key.
+        //  We can call them anonymous Schemas.
+        //  For example a Schema for a Response doesnt need a key.
+        //  This is not possible right now.
+        //  åBecause creating an Schema in anyway requires a "key".
+        //  I think we should proved this functionality but I don't know how yet!
+        //  Maybe we can create an AnonymousSchema class that extends Schema and doesn't require a key?
+        //  Find a better name for it!
+        //  Maybe Schema::anonymous()?
+        // Another idea would be to create a BaseSchema class without the create method.
+        //  Then create 2 Contracts, one for UnnamedSchema and another for NamedSchema.
+        //  These contracts define the create method and either accept the key or not.
+        // Then we accept the proper Contract when needed!
+        // For example here for response we can accept the UnnamedSchema contract!
+        $objectDescriptor = Schema::object()
+            ->properties(
+                Property::create('id', Schema::string()->format(StringFormat::UUID)),
+                Property::create('created_at', Schema::string()->format(StringFormat::DATE_TIME)),
+                Property::create('age', Schema::integer()),
+                Property::create(
+                    'data',
+                    Schema::array()
+                        ->items(
+                            Schema::string()->format(StringFormat::UUID),
+                        ),
+                ),
+            )->required('id', 'created_at');
+
+        $responses = Responses::create(
+            ResponseEntry::create(
+                HTTPStatusCode::ok(),
+                Response::create()->description('OK')
+                    ->content(
+                        ContentEntry::json(
+                            MediaType::create()->schema($objectDescriptor),
+                        ),
+                    ),
+            ),
+        );
+
+        $operation = Operation::create()
+            ->responses($responses)
+            ->tags($tag)
+            ->summary('List all audits')
+            ->operationId('audits.index');
+
+        $createAudit = Operation::create()
+            ->responses($responses)
+            ->tags($tag)
+            ->summary('Create an audit')
+            ->operationId('audits.store')
+            ->requestBody(
+                RequestBody::create(
+                    ContentEntry::json(
+                        MediaType::create()->schema($objectDescriptor),
+                    ),
+                ),
+            );
+
+        $stringDescriptor = Schema::string()->format(StringFormat::UUID);
+        $enumDescriptor = Schema::enum('json', 'ics');
+
+        $readAudit = Operation::create()
+            ->responses($responses)
+            ->tags($tag)
+            ->summary('View an audit')
+            ->operationId('audits.show')
+            ->parameters(
+                Parameters::create(
+                    Parameter::path(
+                        'audit',
+                        PathParameter::create($stringDescriptor),
+                    )->required(),
+                    Parameter::query(
+                        'format',
+                        QueryParameter::create($enumDescriptor),
+                    )->description('The format of the appointments'),
+                ),
+            );
+
+        $paths = Paths::create(
+            Path::create(
+                '/audits',
+                PathItem::create()
+                    ->operations(
+                        AvailableOperation::create(
+                            HttpMethod::GET,
+                            $operation,
+                        ),
+                        AvailableOperation::create(
+                            HttpMethod::POST,
+                            $createAudit,
+                        ),
+                    ),
+            ),
+            Path::create(
+                '/audits/{audit}',
+                PathItem::create()
+                    ->operations(
+                        AvailableOperation::create(
+                            HttpMethod::GET,
+                            $readAudit,
+                        ),
+                    ),
+            ),
+        );
+
+        $servers = [
+            Server::create('https://api.laragen.io/v1'),
+            Server::create('https://api.laragen.io/v2'),
+        ];
+
+        $security = (new TestComplexMultiSecurityFactory())->build();
+
+        $components = Components::create()->securitySchemes(
+            TestBearerSecuritySchemeFactory::create(),
+            TestOAuth2PasswordSecuritySchemeFactory::create(),
+        );
+
+        $externalDocumentation = ExternalDocumentation::create('https://laragen.io')
+            ->description('Example');
+
+        $openApi = OpenAPI::v311($info)
+            ->paths($paths)
+            ->servers(...$servers)
+            ->components($components)
+            ->security($security)
+            ->tags($tag)
+            ->externalDocs($externalDocumentation);
+
+        $result = $openApi->compile();
+
+        expect($result)->toBe([
+            'openapi' => '3.1.1',
+            'info' => [
+                'title' => 'API Specification',
+                'description' => 'For using the Example App API',
+                'contact' => [
+                    'name' => 'Example',
+                    'url' => 'https://laragen.io',
+                    'email' => 'hello@laragen.io',
+                ],
+                'version' => 'v1',
+            ],
+            'jsonSchemaDialect' => JsonSchemaDialect::v31x()->value(),
+            'servers' => [
+                ['url' => 'https://api.laragen.io/v1'],
+                ['url' => 'https://api.laragen.io/v2'],
+            ],
+            'paths' => [
+                '/audits' => [
+                    'get' => [
+                        'tags' => ['Audits'],
+                        'summary' => 'List all audits',
+                        'operationId' => 'audits.index',
+                        'responses' => [
+                            200 => [
+                                'description' => 'OK',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'id' => [
+                                                    'type' => 'string',
+                                                    'format' => 'uuid',
+                                                ],
+                                                'created_at' => [
+                                                    'type' => 'string',
+                                                    'format' => 'date-time',
+                                                ],
+                                                'age' => [
+                                                    'type' => 'integer',
+                                                ],
+                                                'data' => [
+                                                    'type' => 'array',
+                                                    'items' => [
+                                                        'type' => 'string',
+                                                        'format' => 'uuid',
+                                                    ],
+                                                ],
+                                            ],
+                                            'required' => ['id', 'created_at'],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                    'post' => [
+                        'tags' => ['Audits'],
+                        'summary' => 'Create an audit',
+                        'operationId' => 'audits.store',
+                        'requestBody' => [
+                            'content' => [
+                                'application/json' => [
+                                    'schema' => [
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'id' => [
+                                                'type' => 'string',
+                                                'format' => 'uuid',
+                                            ],
+                                            'created_at' => [
+                                                'type' => 'string',
+                                                'format' => 'date-time',
+                                            ],
+                                            'age' => [
+                                                'type' => 'integer',
+                                            ],
+                                            'data' => [
+                                                'type' => 'array',
+                                                'items' => [
+                                                    'type' => 'string',
+                                                    'format' => 'uuid',
+                                                ],
+                                            ],
+                                        ],
+                                        'required' => ['id', 'created_at'],
+                                    ],
+                                ],
+                            ],
+                        ],
+                        'responses' => [
+                            200 => [
+                                'description' => 'OK',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'id' => [
+                                                    'type' => 'string',
+                                                    'format' => 'uuid',
+                                                ],
+                                                'created_at' => [
+                                                    'type' => 'string',
+                                                    'format' => 'date-time',
+                                                ],
+                                                'age' => [
+                                                    'type' => 'integer',
+                                                ],
+                                                'data' => [
+                                                    'type' => 'array',
+                                                    'items' => [
+                                                        'type' => 'string',
+                                                        'format' => 'uuid',
+                                                    ],
+                                                ],
+                                            ],
+                                            'required' => ['id', 'created_at'],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                '/audits/{audit}' => [
+                    'get' => [
+                        'tags' => ['Audits'],
+                        'summary' => 'View an audit',
+                        'operationId' => 'audits.show',
+                        'parameters' => [
+                            [
+                                'name' => 'audit',
+                                'in' => 'path',
+                                'required' => true,
+                                'schema' => [
+                                    'type' => 'string',
+                                    'format' => 'uuid',
+                                ],
+                            ],
+                            [
+                                'name' => 'format',
+                                'in' => 'query',
+                                'description' => 'The format of the appointments',
+                                'schema' => [
+                                    'enum' => ['json', 'ics'],
+                                ],
+                            ],
+                        ],
+                        'responses' => [
+                            200 => [
+                                'description' => 'OK',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'id' => [
+                                                    'type' => 'string',
+                                                    'format' => 'uuid',
+                                                ],
+                                                'created_at' => [
+                                                    'type' => 'string',
+                                                    'format' => 'date-time',
+                                                ],
+                                                'age' => [
+                                                    'type' => 'integer',
+                                                ],
+                                                'data' => [
+                                                    'type' => 'array',
+                                                    'items' => [
+                                                        'type' => 'string',
+                                                        'format' => 'uuid',
+                                                    ],
+                                                ],
+                                            ],
+                                            'required' => ['id', 'created_at'],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'components' => [
+                'securitySchemes' => [
+                    TestBearerSecuritySchemeFactory::name() => [
+                        'type' => 'http',
+                        'description' => 'Example Security',
+                        'scheme' => 'bearer',
+                    ],
+                    'OAuth2Password' => [
+                        'type' => 'oauth2',
+                        'description' => 'OAuth2 Password Security',
+                        'flows' => [
+                            'password' => [
+                                'tokenUrl' => 'https://laragen.io/oauth/authorize',
+                                'refreshUrl' => 'https://laragen.io/oauth/token',
+                                'scopes' => [
+                                    'order' => 'Full information about orders.',
+                                    'order:item' => 'Information about items within an order.',
+                                    'order:payment' => 'Access to order payment details.',
+                                    'order:shipping:address' => 'Information about where to deliver orders.',
+                                    'order:shipping:status' => 'Information about the delivery status of orders.',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'security' => [
+                [
+                    TestBearerSecuritySchemeFactory::name() => [],
+                ],
+                [
+                    TestBearerSecuritySchemeFactory::name() => [],
+                    'OAuth2Password' => [
+                        'order:shipping:address',
+                        'order:shipping:status',
+                    ],
+                ],
+            ],
+            'tags' => [
+                ['name' => 'Audits', 'description' => 'All the audits'],
+            ],
+            'externalDocs' => [
+                'url' => 'https://laragen.io',
+                'description' => 'Example',
+            ],
+        ]);
+    });
+
+    it('can set webhooks', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        $webhookPathItem = PathItem::create()
+            ->operations(
+                AvailableOperation::create(
+                    HttpMethod::POST,
+                    Operation::create()
+                        ->operationId('newPetNotification')
+                        ->summary('Receive notification when a new pet is added')
+                        ->responses(
+                            Responses::create(
+                                ResponseEntry::create(
+                                    HTTPStatusCode::ok(),
+                                    Response::create()->description('Webhook acknowledged'),
+                                ),
+                            ),
+                        ),
+                ),
+            );
+
+        $webhooks = Webhooks::create(
+            Webhook::create('newPet', $webhookPathItem),
+        );
+
+        $openApi = OpenAPI::v311($info)
+            ->webhooks($webhooks);
+
+        $result = $openApi->compile();
+
+        expect($result['webhooks'])->toBe([
+            'newPet' => [
+                'post' => [
+                    'summary' => 'Receive notification when a new pet is added',
+                    'operationId' => 'newPetNotification',
+                    'responses' => [
+                        '200' => [
+                            'description' => 'Webhook acknowledged',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    });
+
+    it('can get webhooks', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        $webhooks = Webhooks::create(
+            Webhook::create('test', PathItem::create()),
+        );
+
+        $openApi = OpenAPI::v311($info)
+            ->webhooks($webhooks);
+
+        expect($openApi->getWebhooks())->toBe($webhooks);
+    });
+
+    it('returns null when no webhooks set', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        $openApi = OpenAPI::v311($info);
+
+        expect($openApi->getWebhooks())->toBeNull();
+    });
+
+    it('can combine webhooks and paths in same spec', function (): void {
+        $info = Info::create('Pet Store API', '1.0.0');
+
+        $paths = Paths::create(
+            Path::create(
+                '/pets',
+                PathItem::create()
+                    ->operations(
+                        AvailableOperation::create(
+                            HttpMethod::GET,
+                            Operation::create()
+                                ->operationId('listPets')
+                                ->responses(
+                                    Responses::create(
+                                        ResponseEntry::create(
+                                            HTTPStatusCode::ok(),
+                                            Response::create()->description('List of pets'),
+                                        ),
+                                    ),
+                                ),
+                        ),
+                    ),
+            ),
+        );
+
+        $webhooks = Webhooks::create(
+            Webhook::create('newPet', PathItem::create()
+                ->operations(
+                    AvailableOperation::create(
+                        HttpMethod::POST,
+                        Operation::create()
+                            ->operationId('newPetWebhook')
+                            ->responses(
+                                Responses::create(
+                                    ResponseEntry::create(
+                                        HTTPStatusCode::ok(),
+                                        Response::create()->description('OK'),
+                                    ),
+                                ),
+                            ),
+                    ),
+                )),
+        );
+
+        $openApi = OpenAPI::v311($info)
+            ->paths($paths)
+            ->webhooks($webhooks);
+
+        $result = $openApi->compile();
+
+        expect($result)->toHaveKeys(['openapi', 'info', 'paths', 'webhooks'])
+            ->and($result['paths'])->toHaveKey('/pets')
+            ->and($result['webhooks'])->toHaveKey('newPet');
+    });
+
+    it('can set $self field for bundled documents (OAS 3.2)', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        $openApi = OpenAPI::v311($info)
+            ->self('/openapi');
+
+        $result = $openApi->compile();
+
+        expect($result['$self'])->toBe('/openapi');
+    });
+
+    it('can set $self with complex JSON Pointer (OAS 3.2)', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        $openApi = OpenAPI::v311($info)
+            ->self('/bundled/apis/pet-store');
+
+        $result = $openApi->compile();
+
+        expect($result['$self'])->toBe('/bundled/apis/pet-store');
+    });
+
+    it('rejects invalid $self JSON Pointer (OAS 3.2)', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        expect(fn () => OpenAPI::v311($info)->self('invalid-pointer'))
+            ->toThrow(InvalidArgumentException::class);
+    });
+
+    it('allows valid tag hierarchy with parent references (OAS 3.2)', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        $parentTag = Tag::create('users');
+        $childTag = Tag::create('admin')->parent('users');
+
+        $openApi = OpenAPI::v311($info)
+            ->tags($parentTag, $childTag);
+
+        $result = $openApi->compile();
+
+        expect($result['tags'])->toBe([
+            ['name' => 'users'],
+            ['name' => 'admin', 'parent' => 'users'],
+        ]);
+    });
+
+    it('rejects tag with non-existent parent (OAS 3.2)', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        $childTag = Tag::create('admin')->parent('non-existent');
+
+        $openApi = OpenAPI::v311($info)
+            ->tags($childTag);
+
+        expect(fn () => $openApi->compile())
+            ->toThrow(
+                InvalidArgumentException::class,
+                'Tag "admin" references parent tag "non-existent" which does not exist in the API description.',
+            );
+    });
+
+    it('rejects direct circular reference in tags (OAS 3.2)', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        // A -> B -> A (circular)
+        $tagA = Tag::create('tagA')->parent('tagB');
+        $tagB = Tag::create('tagB')->parent('tagA');
+
+        $openApi = OpenAPI::v311($info)
+            ->tags($tagA, $tagB);
+
+        expect(fn () => $openApi->compile())
+            ->toThrow(
+                InvalidArgumentException::class,
+                'Circular reference detected in tag hierarchy',
+            );
+    });
+
+    it('rejects indirect circular reference in tags (OAS 3.2)', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        // A -> B -> C -> A (circular)
+        $tagA = Tag::create('tagA')->parent('tagC');
+        $tagB = Tag::create('tagB')->parent('tagA');
+        $tagC = Tag::create('tagC')->parent('tagB');
+
+        $openApi = OpenAPI::v311($info)
+            ->tags($tagA, $tagB, $tagC);
+
+        expect(fn () => $openApi->compile())
+            ->toThrow(
+                InvalidArgumentException::class,
+                'Circular reference detected in tag hierarchy',
+            );
+    });
+
+    it('allows deep but non-circular tag hierarchy (OAS 3.2)', function (): void {
+        $info = Info::create('My API', '1.0.0');
+
+        // root -> level1 -> level2 -> level3 (valid chain)
+        $root = Tag::create('root');
+        $level1 = Tag::create('level1')->parent('root');
+        $level2 = Tag::create('level2')->parent('level1');
+        $level3 = Tag::create('level3')->parent('level2');
+
+        $openApi = OpenAPI::v311($info)
+            ->tags($root, $level1, $level2, $level3);
+
+        $result = $openApi->compile();
+
+        expect($result['tags'])->toHaveCount(4)
+            ->and($result['tags'][3]['parent'])->toBe('level2');
+    });
+})->covers(OpenAPI::class);
