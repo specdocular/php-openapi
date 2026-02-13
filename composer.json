@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "php": "^8.3",
+        "php": "^8.2",
         "specdocular/php-json-schema": "^0.1.0",
         "myclabs/deep-copy": "^1.12",
         "webmozart/assert": "^1.11"
@@ -24,8 +24,8 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.8.0",
         "justinrainbow/json-schema": "^6.0",
-        "pestphp/pest": "^4.0",
-        "pestphp/pest-plugin-type-coverage": "^4.0",
+        "pestphp/pest": "^3.2",
+        "pestphp/pest-plugin-type-coverage": "^3.0",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
