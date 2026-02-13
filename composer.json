@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "specdocular/php-json-schema": "dev-main",
+        "specdocular/php-json-schema": "^0.1.0",
         "myclabs/deep-copy": "^1.12",
         "webmozart/assert": "^1.11"
     },
@@ -35,12 +35,6 @@
         "squizlabs/php_codesniffer": "*",
         "vimeo/psalm": "^6.0.0"
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/specdocular/php-json-schema"
-        }
-    ],
     "autoload": {
         "psr-4": {
             "Specdocular\\OpenAPI\\": "src/"
