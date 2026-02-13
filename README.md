@@ -5,6 +5,7 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/specdocular/php-openapi.svg)](https://packagist.org/packages/specdocular/php-openapi)
 [![PHP Version](https://img.shields.io/packagist/php-v/specdocular/php-openapi.svg)](https://packagist.org/packages/specdocular/php-openapi)
 [![License](https://img.shields.io/packagist/l/specdocular/php-openapi.svg)](https://packagist.org/packages/specdocular/php-openapi)
+[![codecov](https://codecov.io/gh/specdocular/php-openapi/graph/badge.svg)](https://codecov.io/gh/specdocular/php-openapi)
 
 An object-oriented [OpenAPI 3.1.x](https://spec.openapis.org/oas/v3.1.1.html) builder for PHP. Build complete API specifications with a fluent, chainable API that hides the complexity of the OpenAPI specification.
 
