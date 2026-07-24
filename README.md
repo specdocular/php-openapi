@@ -8,6 +8,10 @@
 
 An object-oriented [OpenAPI 3.1.x](https://spec.openapis.org/oas/v3.1.1.html) builder for PHP. Build complete API specifications with a fluent, chainable API that hides the complexity of the OpenAPI specification.
 
+## Requirements
+
+- PHP 8.2 or higher
+
 ## Installation
 
 ```bash
@@ -56,6 +60,14 @@ $json = json_encode($openApi, JSON_PRETTY_PRINT);
 | [specdocular/php-json-schema](https://github.com/specdocular/php-json-schema) | JSON Schema Draft 2020-12 builder (foundation) |
 | [specdocular/laravel-openapi](https://github.com/specdocular/laravel-openapi) | Laravel integration for OpenAPI generation (uses this package) |
 | [specdocular/laravel-rules-to-schema](https://github.com/specdocular/laravel-rules-to-schema) | Convert Laravel validation rules to JSON Schema |
+
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the required checks, and versioning.
+
+## Security
+
+If you discover a security vulnerability, please follow the process in [SECURITY.md](SECURITY.md) rather than opening a public issue.
 
 ## License
 
