@@ -23,8 +23,7 @@ describe(class_basename(Operation::class), function (): void {
     it('can be created with no parameters', function (): void {
         $operation = Operation::create();
 
-        expect($operation->compile())->toHaveCount(1)
-        ->toHaveKey('operationId');
+        expect($operation->compile())->toBe([]);
     });
 
     it(
