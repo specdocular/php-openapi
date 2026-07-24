@@ -650,4 +650,15 @@ describe(class_basename(OpenAPI::class), function (): void {
         expect($result['tags'])->toHaveCount(4)
             ->and($result['tags'][3]['parent'])->toBe('level2');
     });
+
+    it('compiles empty document containers as JSON objects, not arrays', function (): void {
+        $document = OpenAPI::v311(Info::create('API', 'v1'));
+
+        $json = json_encode($document->compile(), JSON_UNESCAPED_SLASHES);
+
+        expect($json)->toContain('"paths":{}')
+            ->and($json)->toContain('"components":{}')
+            ->and($json)->not->toContain('"paths":[]')
+            ->and($json)->not->toContain('"components":[]');
+    });
 })->covers(OpenAPI::class);

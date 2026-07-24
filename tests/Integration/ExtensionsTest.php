@@ -16,7 +16,7 @@ describe(class_basename(Extension::class), function (): void {
         'x-key' => 'value',
         'x-foo' => 'bar',
         'x-baz' => null,
-        'x-obj' => [],
+        'x-obj' => new \stdClass(),
     ];
     dataset('extensibleObjectSet', [
         [

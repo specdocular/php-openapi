@@ -54,11 +54,37 @@ trait Generator
     /**
      * Compiles the object to an associative array.
      *
+     * Empty object-positions (an empty Schema Object, an empty `paths`/`components`
+     * container marked via {@see self::toObjectIfEmpty()}) survive as `\stdClass` so a
+     * subsequent json_encode() renders `{}`, not `[]`. A plain `json_decode(…, true)`
+     * would flatten both onto the same PHP `[]`, losing the OAS object-vs-array
+     * distinction; decoding as objects and re-arrayifying preserves it.
+     *
      * @throws \JsonException
      */
     public function compile(): array
     {
-        return json_decode($this->toJson(), true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($this->toJson(), false, 512, JSON_THROW_ON_ERROR);
+        $result = self::preserveEmptyObjects($decoded);
+
+        return is_array($result) ? $result : (array) $result;
+    }
+
+    private static function preserveEmptyObjects(mixed $value): mixed
+    {
+        if ($value instanceof \stdClass) {
+            $properties = get_object_vars($value);
+
+            return [] === $properties
+                ? $value
+                : array_map([self::class, 'preserveEmptyObjects'], $properties);
+        }
+
+        if (is_array($value)) {
+            return array_map([self::class, 'preserveEmptyObjects'], $value);
+        }
+
+        return $value;
     }
 
     public function toObjectIfEmpty(
