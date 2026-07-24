@@ -63,6 +63,24 @@ describe('Arr', function (): void {
         ]);
     });
 
+    it('preserves null elements in a list', function (): void {
+        $array = Arr::filter([null, 94]);
+
+        expect($array)->toBe([null, 94]);
+    });
+
+    it('preserves a null element in a nested list value', function (): void {
+        $array = Arr::filter(['examples' => [null, 94]]);
+
+        expect($array)->toBe(['examples' => [null, 94]]);
+    });
+
+    it('still normalizes null fields inside object elements of a list', function (): void {
+        $array = Arr::filter([['a' => 1, 'b' => null]]);
+
+        expect($array)->toBe([['a' => 1]]);
+    });
+
     it('recursively processes nested JsonSerializable objects', function (): void {
         $inner = new class implements \JsonSerializable {
             public function jsonSerialize(): array

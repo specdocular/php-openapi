@@ -1,5 +1,6 @@
 <?php
 
+use Specdocular\JsonSchema\Draft202012\LooseFluentDescriptor;
 use Specdocular\OpenAPI\Schema\Objects\Encoding\Encoding;
 use Specdocular\OpenAPI\Schema\Objects\Example\Example;
 use Specdocular\OpenAPI\Schema\Objects\MediaType\MediaType;
@@ -194,5 +195,28 @@ describe(class_basename(MediaType::class), function (): void {
                 'contentType' => 'application/octet-stream',
             ],
         ]);
+    });
+    it('preserves a null example in a nullable schema examples array', function (): void {
+        $mediaType = MediaType::create()->schema(
+            LooseFluentDescriptor::withoutSchema()->type('null', 'integer')->examples(null, 94),
+        );
+
+        expect($mediaType->compile()['schema']['examples'])->toBe([null, 94]);
+    });
+
+    it('preserves a null member in a nullable schema enum', function (): void {
+        $mediaType = MediaType::create()->schema(
+            LooseFluentDescriptor::withoutSchema()->type('null', 'string')->enum(null, 'a'),
+        );
+
+        expect($mediaType->compile()['schema']['enum'])->toBe([null, 'a']);
+    });
+
+    it('keeps falsy-non-null schema examples untouched', function (): void {
+        $mediaType = MediaType::create()->schema(
+            LooseFluentDescriptor::withoutSchema()->type('boolean')->examples(false, true),
+        );
+
+        expect($mediaType->compile()['schema']['examples'])->toBe([false, true]);
     });
 })->covers(MediaType::class);
