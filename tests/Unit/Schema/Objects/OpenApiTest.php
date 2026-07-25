@@ -8,6 +8,7 @@ use Specdocular\OpenAPI\Schema\Objects\ExternalDocumentation\ExternalDocumentati
 use Specdocular\OpenAPI\Schema\Objects\Info\Info;
 use Specdocular\OpenAPI\Schema\Objects\MediaType\MediaType;
 use Specdocular\OpenAPI\Schema\Objects\OpenAPI\Fields\JsonSchemaDialect;
+use Specdocular\OpenAPI\Schema\Objects\OpenAPI\Fields\OpenAPI as OpenAPIField;
 use Specdocular\OpenAPI\Schema\Objects\OpenAPI\OpenAPI;
 use Specdocular\OpenAPI\Schema\Objects\Operation\Operation;
 use Specdocular\OpenAPI\Schema\Objects\Parameter\Parameter;
@@ -660,5 +661,17 @@ describe(class_basename(OpenAPI::class), function (): void {
             ->and($json)->toContain('"components":{}')
             ->and($json)->not->toContain('"paths":[]')
             ->and($json)->not->toContain('"components":[]');
+    });
+
+    it('exposes a v320 version field factory (OAS 3.2)', function (): void {
+        expect(OpenAPIField::v320()->value())
+            ->toBe('3.2.0');
+    });
+
+    it('emits openapi 3.2.0 via the v320 document factory (OAS 3.2)', function (): void {
+        $result = OpenAPI::v320(Info::create('My API', '1.0.0'))->compile();
+
+        expect($result['openapi'])->toBe('3.2.0')
+            ->and($result['jsonSchemaDialect'])->toBe(JsonSchemaDialect::v31x()->value());
     });
 })->covers(OpenAPI::class);

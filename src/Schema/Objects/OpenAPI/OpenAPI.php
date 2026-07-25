@@ -58,6 +58,12 @@ final class OpenAPI extends ExtensibleObject
         return new self(OpenAPIField::v311(), $info);
     }
 
+    public static function v320(
+        Info $info,
+    ): self {
+        return new self(OpenAPIField::v320(), $info);
+    }
+
     /**
      * A JSON Pointer to this OpenAPI Object within a bundled document.
      *

@@ -28,6 +28,11 @@ final readonly class OpenAPI extends StringField
         return new self('3.1.1');
     }
 
+    public static function v320(): self
+    {
+        return new self('3.2.0');
+    }
+
     public function value(): string
     {
         return $this->value;
