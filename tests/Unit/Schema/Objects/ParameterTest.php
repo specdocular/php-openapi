@@ -293,13 +293,13 @@ describe('Parameter', function (): void {
         ],
     ]);
 
-    it('path parameters should have required() called for OAS 3.2 compliance', function (): void {
-        // Per OAS 3.2, path parameters MUST have required=true
-        // This test verifies the API supports setting it explicitly
+    it('path parameters are required=true without an explicit required() call', function (): void {
+        // Per OAS 3.2, path parameters MUST have required=true, so the factory
+        // forces it: a bare path() already compiles with required=true.
         $parameter = Parameter::path(
             'id',
             PathParameter::create(Schema::string()),
-        )->required();
+        );
 
         expect($parameter->compile())->toHaveKey('required', true);
     });

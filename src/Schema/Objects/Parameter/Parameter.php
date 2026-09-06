@@ -62,11 +62,10 @@ final class Parameter extends ExtensibleObject
     /**
      * Create a path parameter.
      *
-     * Note: Per OAS 3.2 spec, path parameters SHOULD have `required()` set to true:
+     * Per OAS 3.2 spec, a path parameter's `required` field MUST be true:
      * "If the parameter location is 'path', this field is REQUIRED and its value MUST be true."
-     *
-     * However, this library allows flexibility for frameworks like Laravel that support
-     * optional route parameters. Call `->required()` for OAS-compliant documents.
+     * The factory forces it, so a bare `path()` is already spec-compliant; an
+     * explicit `->required()` is redundant.
      *
      * @see https://spec.openapis.org/oas/v3.2.0#parameter-object
      */
@@ -74,7 +73,7 @@ final class Parameter extends ExtensibleObject
         string $name,
         Content|PathParameter $serialization,
     ): self {
-        return new self(Name::create($name), In::path(), $serialization);
+        return (new self(Name::create($name), In::path(), $serialization))->required();
     }
 
     public static function query(
