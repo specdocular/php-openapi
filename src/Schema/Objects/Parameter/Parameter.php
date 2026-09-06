@@ -207,11 +207,6 @@ final class Parameter extends ExtensibleObject
         return $this->in->value();
     }
 
-    public function isRequired(): bool
-    {
-        return true === $this->required;
-    }
-
     public function toArray(): array
     {
         return Arr::filter([

@@ -79,50 +79,6 @@ final class Parameters extends Generatable
         if ($querystringCount > 0 && $hasQueryParam) {
             throw new \InvalidArgumentException('querystring and query parameters cannot appear together in the same operation/path-item. See: https://spec.openapis.org/oas/v3.2.0#parameter-locations');
         }
-
-        // Warning: path parameters should have required=true per OAS 3.2
-        self::warnAboutNonCompliantPathParams($parameters);
-    }
-
-    /**
-     * Warns about path parameters without required=true.
-     *
-     * Per OAS 3.2: "If the parameter location is 'path', this field is REQUIRED
-     * and its value MUST be true."
-     *
-     * This is a warning (not exception) to support frameworks like Laravel that
-     * have optional route parameters. Strict OAS compliance requires all path
-     * params to have required=true.
-     *
-     * @param (Parameter|ParameterFactory)[] $parameters
-     *
-     * @see https://spec.openapis.org/oas/v3.2.0#parameter-object
-     */
-    private static function warnAboutNonCompliantPathParams(array $parameters): void
-    {
-        $nonCompliantParams = [];
-
-        foreach ($parameters as $parameter) {
-            if ($parameter instanceof ParameterFactory) {
-                $parameter = $parameter->component();
-            }
-
-            if ('path' === $parameter->getLocation() && !$parameter->isRequired()) {
-                $nonCompliantParams[] = $parameter->getName();
-            }
-        }
-
-        if ([] !== $nonCompliantParams) {
-            @trigger_error(
-                sprintf(
-                    'OAS 3.2 compliance notice: Path parameter(s) "%s" should have required=true. '
-                    . 'Per spec: "If the parameter location is \'path\', this field is REQUIRED and its value MUST be true." '
-                    . 'See: https://spec.openapis.org/oas/v3.2.0#parameter-object',
-                    implode('", "', $nonCompliantParams),
-                ),
-                E_USER_NOTICE,
-            );
-        }
     }
 
     /**
